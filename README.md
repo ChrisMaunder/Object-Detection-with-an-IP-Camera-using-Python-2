@@ -20,13 +20,13 @@ This article is based on Matthew Dennis' the far more comprehensive article, [Ho
 
 Start with Visual Studio Code, with the [Jupyter notebook extension](https://marketplace.visualstudio.com/items?itemName=ms-toolsai.jupyter), and the [Jupyter notebook](/Articles/5347827/How-to-Train-a-Custom-YOLOv5-Model-to-Detect-Objec) that Matthew's article supplies. In that notebook, a Python Virtual environment is created.
 
-```cpp
+```jupyter
 !Python -m venv venv
 ```
 
 Clone the Ultralytics YOLOv5 repository
 
-```cpp
+```jupyter
 !git clone <a href="https://github.com/ultralytics/yolov5">https://github.com/ultralytics/yolov5</a>
 ```
 
@@ -36,7 +36,7 @@ In the download containing the Jupyter notebook is a *requirements.txt* file tha
 
 Install the dependencies:
 
-```cpp
+```jupyter
 %pip install fiftyone
 %pip install -r requirements-cpu.txt 
 %pip install ipywidgets
@@ -50,7 +50,7 @@ To train a custom model, we need images with which to build the model. An import
 
 We'll use the excellent fiftyone package to grab images from the extensive Open Images collection. To start with, we create a critters dataset containing just raccoons, then iteratively add cats, dogs, and the rest to this collection.
 
-```cpp
+```python
     import fiftyone as fo
     import fiftyone.zoo as foz
 
@@ -160,7 +160,7 @@ We'll use the excellent fiftyone package to grab images from the extensive Open 
 
 The next step is to export this training data to the format required by the YOLOv5 trainers:
 
-```cpp
+```python
     import fiftyone as fo
 
     export_dir = "datasets/critters"
@@ -190,7 +190,7 @@ The next step is to export this training data to the format required by the YOLO
 
 During this process, a *datasets\critters\dataset.yaml* file will be created. We'll need to tweak this slightly to rename `validation` to `val`. Your file should look like:
 
-```cpp
+```yml
 names: 
 - Raccoon 
 - Cat 
@@ -219,7 +219,7 @@ You may want to adjust the number of images to suit your setup. Resource use can
 
 To start the model training within our Jupyter notebook, we run *yolov5/train.py* Python module using the ! syntax to launch an external process:
 
-```cpp
+```jupyter
 !python yolov5/train.py --batch 24 --weights
 yolov5s.pt --data datasets/critters/dataset.yaml --project train/critters
 --name epochs50 --epochs 300
@@ -231,7 +231,7 @@ We set the `batch` parameter to `24` simply to ensure we didn't run out of memor
 
 You can stop the training at any point and restart using the `--resume` flag
 
-```cpp
+```jupyter
 !python yolov5/train.py --resume train/critters/epochs300/weights/last.pt 
 ```
 
@@ -254,19 +254,19 @@ We'll be modifying the code from [Detecting raccoons using CodeProject.AI Server
 
 Using the model is trivial. We will modify our `do_detection` method to use the new model by changing the line in `do_detection` from:
 
-```cpp
+```python
         response = session.post(opts.endpoint("vision/detection"), 
 ```
 
 to:
 
-```cpp
+```python
         response = session.post(opts.endpoint("vision/custom/critters"), 
 ```
 
 However, to wire up an alert, we need to know what to look for, and whether it was found. We'll add a parameter that accepts a list of 'intruders' to watch for, and also return a comma delimited list of intruders found.
 
-```cpp
+```python
 model_name = "critters"             # Model we'll use
 intruders  = [ "racoon", "skunk" ]  # Things we care about
 
@@ -331,7 +331,7 @@ def do_detection(image: Image, intruders: List[str]) -> "(Image, str)":
 
 Next we'll modify the `main` method so that if we have detected a raccoon, an alert is thrown.
 
-```cpp
+```python
 secs_between_checks = 5   # Min secs between sending a frame to CodeProject.AI
 last_check_time = datetime(1999, 11, 15, 0, 0, 0)
 recipient       = "alerts@acme_security.com"    # Sucker who deals with reports
@@ -395,14 +395,14 @@ The last piece of the puzzle is the `report_intruder` method. We'll write to con
 
 To enable this, use or create a Gmail account and use the Windows `setx` command to store the email and password for your account in an environment variable. **This is not secure** but it beats committing your password to a Git repo. Please use a test email account for this, not your actual email account.
 
-```cpp
+```cmd
 setx CPAI_EMAIL_DEMO_FROM "me@gmail.com"
 setx CPAI_EMAIL_DEMO_PWD  "password123" 
 ```
 
 Our `report_intruder` method, and the `send_email` method it uses, are as follows:
 
-```cpp
+```python
 last_alert_time = datetime(1999, 11, 15, 0, 0, 0)
 secs_between_alerts = 300 # Min secs between sending alerts (don't spam!)
 
